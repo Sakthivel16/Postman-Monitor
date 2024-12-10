@@ -1,0 +1,15 @@
+pipelines:
+  default:
+    - step:
+        name: Run Postman Tests
+        image: postman/newman_alpine33
+        caches:
+          - node
+        script:
+          - npm install -g newman
+          - newman run postman-tests/collection.json \
+            --environment postman-tests/environment.json \
+            --reporters cli,html \
+            --reporter-html-export newman-report.html
+        artifacts:
+          - newman-report.html # Save the HTML report as an artifact
