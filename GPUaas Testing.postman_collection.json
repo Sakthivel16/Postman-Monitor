@@ -1,0 +1,594 @@
+{
+	"info": {
+		"_postman_id": "4d54473f-c0b5-448a-a24d-78335a115c27",
+		"name": "GPUaas Testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15032775"
+	},
+	"item": [
+		{
+			"name": "Login Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();\r",
+							"const token = response.token;\r",
+							"pm.test(\"Validate token presence\", function () {\r",
+							"    pm.expect(response).to.have.property('token');\r",
+							"    pm.expect(response.token).to.not.be.null;\r",
+							"});\r",
+							"\r",
+							"// Set the token as an environment variable\r",
+							"pm.environment.set(\"token\", token);\r",
+							"\r",
+							"// Store cookies from the response headers\r",
+							"pm.test(\"Get cookies from header\", function () {\r",
+							"    const cookies = pm.response.headers.get(\"Set-Cookie\");\r",
+							"    // pm.environment.set(\"cookie\", cookies);\r",
+							"    console.log(cookies);\r",
+							"});\r",
+							"\r",
+							"// Test for the value of \"is_super_admin\" in the response body\r",
+							"pm.test(\"Verify super admin key is present in response\", function () {\r",
+							"    pm.expect(response.is_super_admin).to.be.true;\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\":\"hosted_ai\",\r\n  \"password\":\"hosted_ai\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/login",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "gpuaas-enable Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response body should have an 'id' property\", function () {\r",
+							"    pm.expect(pm.response.json()).to.have.property('id');\r",
+							"});\r",
+							"\r",
+							"pm.test(\"The value of 'id' should not be null\", function () {\r",
+							"    pm.expect(pm.response.json().id).not.eql(null);\r",
+							"});\r",
+							"pm.test(\"Check cluster_id in the response is equal to 7\", function () {\r",
+							"    pm.expect(pm.response.json().cluster_id).to.eql(7);\r",
+							"});\r",
+							"pm.test(\"Check status_desc in the response\", function () {\r",
+							"    pm.expect(pm.response.json().status_desc).to.eql(\"Creating VM for master node\");\r",
+							"});\r",
+							"\r",
+							"// pm.globals.set(\"gpuId\", pm.response.json().id);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cluster_id\": 7,\n\n    \"pools\": [\n        { \n            \"pool_name\": \"Tester is testing\", \"attach_gpu_ids\": [2],\n            \"oversubscription_strategy\":\"TIMESLICING\",\n            \"oversubscription_ratio\":2\n        }\n        // { \n        //     \"pool_name\": \"A100_infrence\", \"attach_gpu_ids\": [1],\n        //     \"oversubscription_strategy\":\"TIMESLICING\",\n        //     \"oversubscription_ratio\":2\n        // }\n    ]\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/gpuaas/enable",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"enable"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list-regions Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Verify region_name is us-x-2\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0].region_name).to.eql(\"us-x-2\");\r",
+							"});\r",
+							"pm.test(\"Verify region_name is us-x-1\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[1].region_name).to.eql(\"us-x-1\");\r",
+							"});\r",
+							"pm.test(\"Verify country is India\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0].country).to.eql(\"India\");\r",
+							"});\r",
+							"pm.test(\"Verify country code is in\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0].country_code).to.eql(\"in\");\r",
+							"});\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"pm.globals.set(\"gpuaas_id\", jsonData[0].gpuaas_id);\r",
+							"\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/gpuaas/list/regions",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"list",
+						"regions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "gpuaas-add-pool Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 404) {\r",
+							"    // Execute this block if status code is 404\r",
+							"    pm.test(\"Verify status code is 404\", function () {\r",
+							"        pm.test(\"verify message is 'gpuaas not enabled'\", function () {\r",
+							"    pm.response.to.have.jsonBody(\"message\", \"gpuaas not enabled\");\r",
+							"});\r",
+							"    });\r",
+							"} else {\r",
+							"    // Validate 200 status code\r",
+							"    pm.test(\"Verify status code is 200\", function () {\r",
+							"        pm.response.to.have.status(200);\r",
+							"    });\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"gpuaas_id\": {{gpuaas_id}},\n    \"pool\": { \n        \"pool_name\": \"Tester is testing\", \"attach_gpu_ids\": [2],\n        \"oversubscription_strategy\":\"TIMESLICING\",\n        \"oversubscription_ratio\":2\n    }\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/gpuaas/pool/add",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"pool",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-gpuaas Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Status description should be 'Creating VM for master node' or 'Setting up master node'\", function () {\r",
+							"    pm.expect(pm.response.json().status_desc).to.satisfy(function (statusDesc) {\r",
+							"        return statusDesc === \"Creating VM for master node\" || statusDesc === \"Setting up master node\";\r",
+							"    });\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check if 'id' is present in the response body\", function () {\r",
+							"    pm.expect(pm.response.json()).to.have.property('id');\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "// {\n//     \"gpuaas_id\": 24,\n//     \"pool\": { \n//         \"pool_name\": \"Testing pool\", \"attach_gpu_ids\": [2],\n//         \"oversubscription_strategy\":\"TIMESLICING\",\n//         \"oversubscription_ratio\":2\n//     }\n// }\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/gpuaas/{{gpuaas_id}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"{{gpuaas_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-gpuaas2 Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status description is 'Master node setup completed'\", function () {\r",
+							"    pm.expect(pm.response.json().status_desc).to.eql(\"Master node setup completed\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check if 'id' is present in the response body\", function () {\r",
+							"    pm.expect(pm.response.json()).to.have.property('id');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Wait for 8 minutes before executing the API\r",
+							"setTimeout(function() {\r",
+							"    pm.sendRequest({\r",
+							"        url: pm.variables.get(\"url\") + \"/api/gpuaas/\" + pm.variables.get(\"gpuaas_id\"),\r",
+							"        method: 'GET',\r",
+							"        header: {\r",
+							"            'Content-Type': 'application/json'\r",
+							"        },\r",
+							"        body: {\r",
+							"            mode: 'raw',\r",
+							"            raw: JSON.stringify({})\r",
+							"        }\r",
+							"    }, function (err, res) {\r",
+							"        // Add your tests or use the response as needed\r",
+							"    });\r",
+							"}, 480000); // 8 minutes in milliseconds"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/gpuaas/{{gpuaas_id}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"{{gpuaas_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "gpu-add-pool2 Copy",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// // Delay the API request by 8 minute\r",
+							"// setTimeout(function() {\r",
+							"//     pm.sendRequest({\r",
+							"//         url: pm.variables.get(\"url\") + \"/api/gpuaas/pool/add\",\r",
+							"//         method: 'POST',\r",
+							"//         header: {\r",
+							"//             'Content-Type': 'application/json'\r",
+							"//         },\r",
+							"//         body: {\r",
+							"//             mode: 'raw',\r",
+							"//             raw: JSON.stringify({\r",
+							"//                 \"gpuaas_id\": pm.variables.get(\"gpuId\"),\r",
+							"//                 \"pool\": { \r",
+							"//                     \"pool_name\": \"Tester is testing\", \r",
+							"//                     \"attach_gpu_ids\": [2],\r",
+							"//                     \"oversubscription_strategy\":\"TIMESLICING\",\r",
+							"//                     \"oversubscription_ratio\":2\r",
+							"//                 }\r",
+							"//             })\r",
+							"//         }\r",
+							"//     }, function(err, res) {\r",
+							"//         // Add any assertions or actions for the response here\r",
+							"//     });\r",
+							"// }, 480000); // 8 minute in milliseconds\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test for pool_name value in the response body\r",
+							"pm.test(\"Pool name should be 'tester is testing'\", function () {\r",
+							"    pm.expect(pm.response.json().pool_name).to.eql(\"Tester is testing\");\r",
+							"});\r",
+							"pm.test(\"Check if gpuaas_id is present in the response\", function () {\r",
+							"    pm.expect(pm.response.json()).to.have.property('gpuaas_id');\r",
+							"});\r",
+							"// Test for checking if id is present in the response body\r",
+							"pm.test(\"Check if id is present in the response\", function () {\r",
+							"    pm.expect(pm.response.json()).to.have.property('id');\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"gpuaas_id\": {{gpuaas_id}},\r\n    \"pool\": { \r\n        \"pool_name\": \"Tester is testing\", \"attach_gpu_ids\": [2],\r\n        \"oversubscription_strategy\":\"TIMESLICING\",\r\n        \"oversubscription_ratio\":2\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/gpuaas/pool/add",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"pool",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "pci-devs Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Check resource_group_id is 3 for each item in the response\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    jsonData.forEach(item => {\r",
+							"        pm.expect(item.resource_group_id).to.eql(3);\r",
+							"    });\r",
+							"});\r",
+							"pm.test(\"Check type is GPU for each item in the response\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    jsonData.forEach(item => {\r",
+							"        pm.expect(item.type).to.eql(\"GPU\");\r",
+							"    });\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check if virtupian_id is present in the response\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    for (var i = 0; i < jsonData.length; i++) {\r",
+							"        pm.expect(jsonData[i]).to.have.property('virtupian_id');\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/resource_groups/3/pcidevs",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"resource_groups",
+						"3",
+						"pcidevs"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "detached",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list-pools Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test for gpuaas_id equality\r",
+							"pm.test(\"gpuaas_id should be equal to the globally declared gpuaas_id\", function () {\r",
+							"    pm.expect(pm.response.json()[0].gpuaas_id).to.equal(pm.globals.get(\"gpuaas_id\"));\r",
+							"});\r",
+							"\r",
+							"// Test for pool_name equality\r",
+							"pm.test(\"pool_name should be 'tester is testing'\", function () {\r",
+							"    pm.expect(pm.response.json()[0].pool_name).to.equal(\"Tester is testing\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/gpuaas/{{gpuaas_id}}/pool/list",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"gpuaas",
+						"{{gpuaas_id}}",
+						"pool",
+						"list"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
