@@ -7,8 +7,9 @@ pipelines:
           - node
         script:
           - npm install -g newman
-          - newman run postman-tests/collection.json \
-            --environment postman-tests/environment.json \
+          - npm install -g newman-reporter-html
+          - newman run postman-tests/GPUaas Testing.postman_collection.json \
+            # --environment postman-tests/environment.json \
             --reporters cli,html \
             --reporter-html-export newman-report.html
         artifacts:
